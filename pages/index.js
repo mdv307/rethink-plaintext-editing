@@ -82,9 +82,9 @@ function Previewer({ file }) {
   useEffect(() => {
     (async () => {
       setValue(await file.text());
+      // console.log(file.text())
     })();
   }, [file]);
-
   return (
     <div className={css.preview}>
       <div className={css.title}>{path.basename(file.name)}</div>
@@ -99,8 +99,8 @@ Previewer.propTypes = {
 
 // Uncomment keys to register editors for media types
 const REGISTERED_EDITORS = {
-  // "text/plain": PlaintextEditor,
-  // "text/markdown": MarkdownEditor,
+  "text/plain": PlaintextEditor,
+  "text/markdown": MarkdownEditor,
 };
 
 function PlaintextFilesChallenge() {
@@ -113,9 +113,7 @@ function PlaintextFilesChallenge() {
   }, []);
 
   const write = file => {
-    console.log('Writing soon... ', file.name);
-
-    // TODO: Write the file to the `files` array
+    
   };
 
   const Editor = activeFile ? REGISTERED_EDITORS[activeFile.type] : null;
