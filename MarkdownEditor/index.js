@@ -1,60 +1,45 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { ContentState, Editor, EditorState } from 'draft-js';
+import { ContentState, EditorState } from 'draft-js';
+import Editor from "draft-js-plugins-editor";
 import 'draft-js/dist/Draft.css';
-import ReactMarkdown from 'react-markdown';
 import path from 'path';
-
-import MDEditor ,{ commands } from '@uiw/react-md-editor';
-
+import MDEditor from '@uiw/react-md-editor';
 import css from './style.css';
-const input = '# This is a header\n\nAnd this is a paragraph'
-
 function MarkdownEditor({ file, write }) {
-  const saveContent = (content) => {
-    window.localStorage.setItem('content', content);
+  const saveContent = (content) => {   //To save content to localStorage
+    window.localStorage.setItem('content'+path.basename(file.name), content);
   }
-  const content = window.localStorage.getItem('content');
-
-  // const [m, setM] = React.useState("**Hello world!!!**");
-  const onChange = (editorState) => {
+  const onChange = () => {   // To call savecontent when there are any changes
     const contentState = editorState.getCurrentContent().getPlainText('\u0001')
-    console.log('content state', editorState.getCurrentContent())
     saveContent(contentState);
   }
-  const [value, setValue] = useState('');
+  const content = window.localStorage.getItem('content' + path.basename(file.name));   // To get values from localStorage to display in Markdown
+
   useEffect(() => {
     (async () => {
-      setValue(await file.text());
-      // console.log(file.text())
+      window.localStorage.setItem('content' + path.basename(file.name), await file.text());
     })();
   }, [file]);
 
-  const [editorState, setEditorState] = React.useState(
-    () => 
-    EditorState.createWithContent(ContentState.createFromText(value)),
-  );
-  const [v, setV] = useState(false);
-  const _onbutclick = () => {
-    setV(true)
-  }
-  // console.log(file, write);
-  // console.log(v)
+  const initialState = content ? EditorState.createWithContent(ContentState.createFromText(content)) : EditorState.createEmpty();
+  const [editorState, setEditorState] = React.useState(initialState);   // Adding Editor state
+    
   return (
     <div className={css.editor}>
     <div className={css.title}>{path.basename(file.name)}</div>
-    {/* <div className={css.title}>{path.basename(file.name)}</div> */}
     <div className={css.content}>
-      <Editor className="draft" editorState={editorState} onChange={setEditorState} />
-      <button class="Button" onClick={onChange(editorState)} >Save</button>
-      <button class="Button" onClick={_onbutclick} >Preview</button>
+    <Editor className={css.draft} //Editor For User Input
+        editorState={editorState} 
+        onChange={setEditorState}
+        spellCheck={true} 
+          />
+      {/* To Save the changes made by the user to storage */}
+      <button class="button" onClick={() => onChange(editorState)}>Save</button> 
       </div>
       <div className={css.title}>Preview</div>
-      {v ? 
-      <MDEditor.Markdown className={css.content}
-      source={content} /> :
-      <MDEditor.Markdown className={css.content}
-      source={value} />  }
+      <MDEditor.Markdown className={css.content} //Markdown Editor to convert editor content to Markdown 
+      source={content} />
     </div>
   );
 }

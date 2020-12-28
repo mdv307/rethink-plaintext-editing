@@ -1,55 +1,47 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { ContentState, convertToRaw, convertFromRaw, Editor, EditorState } from 'draft-js';
+import { ContentState , EditorState } from 'draft-js';
+import Editor from "draft-js-plugins-editor";
 import 'draft-js/dist/Draft.css';
 import path from 'path';
-
+import createToolbarPlugin from "draft-js-static-toolbar-plugin";
+const staticToolbarPlugin = createToolbarPlugin();
+const { Toolbar } = staticToolbarPlugin;
 import css from './style.css';
-
-
 function PlaintextEditor({ file, write }) {
-  // console.log(file, write);
-  const saveContent = (content) => {
-    window.localStorage.setItem('content', content);
+  const saveContent = (content) => {   //To save content to localStorage
+    localStorage.setItem('content'+path.basename(file.name), content);
   }
-  const onChange = () => {
-    // console.log(content)
-    // saveContent(value)
-    const contentState = EditorState.getPlainText('\u0001')
+  const onChange = () => { // To call savecontent when there are any changes
+    const contentState = editorState.getCurrentContent().getPlainText('\u0001')
+    console.log(contentState)
     saveContent(contentState);
   }
-  const content = window.localStorage.getItem('content');
+  const content = window.localStorage.getItem('content' + path.basename(file.name)); // To get values from localStorage to display in Markdown
 
-  const [value, setValue] = useState('');
   useEffect(() => {
     (async () => {
-      setValue(await file.text());
-      // console.log(file.text())
+      window.localStorage.setItem('content' + path.basename(file.name), await file.text());
     })();
   }, [file]);
 
-  window.localStorage.setItem('content', file);
-  const [editorState, setEditorState] = React.useState(
-    () => 
-    EditorState.createEmpty()
-  );
-  const clicking = () => {
-    if(content) {
-      setEditorState(EditorState.createWithContent(ContentState.createFromText(content)))
-    } else {
-      setEditorState(EditorState.createEmpty)
-    }
-  }
- 
+  const initialState = content ? EditorState.createWithContent(ContentState.createFromText(content)) : EditorState.createEmpty();
+  const [editorState, setEditorState] = React.useState(initialState); // Adding Editor state
+    
   return (
     <div className={css.preview}>
-      {/* {setValue(file)} */}
       <div className={css.title}>{path.basename(file.name)}</div>
-      {/* <div className={css.title}>{path.basename(file.name)}</div> */}
       <div className={css.content}>
-      <button class="button" onClick={() => { saveContent(value); content}}>load</button>
-      <Editor className={css.draft} editorState={EditorState.createWithContent(ContentState.createFromText(value))} onChange={() => {onChange}} />
-      {/* <button class="button" onClick={() => onChange(editorState)}>Save</button> */}
+      <Editor className={css.draft}  //Editor For User Input
+        editorState={editorState} 
+        onChange={setEditorState}
+        plugins={[staticToolbarPlugin]}
+        spellCheck={true} 
+          />
+      {/* ToolBar to change selection to Bold, Italic,  Underlined */}
+      <Toolbar className={css.tools} />
+      {/* To Save the changes made by the user to storage */}
+      <button class="button" onClick={() => onChange(editorState)}>Save</button>
     </div>
     </div>
   );
